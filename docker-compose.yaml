@@ -1,0 +1,16 @@
+name: kidde-collector
+services:
+  kidde-collector:
+    container_name: kidde-collector
+    environment:
+      SEND_TO_MQTT: "Y"
+      SEND_TO_INFLUXDB: "N"
+      KIDDLE_MQTT_HOST: X.X.X.X
+      KIDDLE_MQTT_USERNAME: xx
+      KIDDLE_MQTT_PASSWORD: xxx
+      KIDDE_COLLECTOR_KIDDE_PASSWORD: xxx
+      KIDDE_COLLECTOR_KIDDE_USERNAME: xxx@xxx.xxx
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always

@@ -1,2 +1,3 @@
 aiohttp==3.10.10
 influxdb_client==1.46.0
+ha-mqtt-discoverable

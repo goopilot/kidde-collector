@@ -8,6 +8,7 @@ from dataclasses import asdict
 import config
 from kidde_api import KiddeAPI
 from influxdb_writer import InfluxDBWriter
+from mqtt_writer import MqttWriter
 import traceback
 
 # General log level
@@ -31,19 +32,22 @@ logger.info("Logger initialized with level: %s", config.LOG_LEVEL)
 
 
 class KiddeCollector:
-    def __init__(self, kidde_api, influxdb_writer):
+    def __init__(self, kidde_api):
         self.kidde_api = kidde_api
-        self.influxdb_writer = influxdb_writer
         self.validate_config()
         self.create_directories_and_files()
+        self.mqtt_writer = None
+        self.influxdb_writer = None
+        if config.SEND_TO_MQTT == 'Y':
+            self.mqtt_writer = MqttWriter()
+        if config.SEND_TO_INFLUXDB == 'Y':
+            self.influxdb_writer = InfluxDBWriter()
+
         logger.info("KiddeCollector initialized.")
+        
 
     def validate_config(self):
         required_vars = {
-            "INFLUXDB_URL": config.INFLUXDB_URL,
-            "INFLUXDB_TOKEN": config.INFLUXDB_TOKEN,
-            "INFLUXDB_ORG": config.INFLUXDB_ORG,
-            "INFLUXDB_BUCKET": config.INFLUXDB_BUCKET,
             "KIDDE_USERNAME": config.KIDDE_USERNAME,
             "KIDDE_PASSWORD": config.KIDDE_PASSWORD,
             "COOKIES_DIR": config.COOKIES_DIR,
@@ -94,8 +98,10 @@ class KiddeCollector:
                         json.dump(serializable_data, json_file, indent=4)
                         json_file.write("\n")
                     logger.debug(f"Data saved to {json_file_name}")
-
-                await self.influxdb_writer.write_data_to_influxdb(data)
+                if self.mqtt_writer is not None:
+                    await self.mqtt_writer.write_data_to_mqtt(data)
+                if self.influxdb_writer is not None:
+                    await self.influxdb_writer.write_data_to_influxdb(data)
                 logger.info(f"Processed {len(data.devices)} devices")
 
             except Exception as e:
@@ -115,8 +121,7 @@ class KiddeCollector:
 if __name__ == "__main__":
     try:
         kidde_api = KiddeAPI()
-        influxdb_writer = InfluxDBWriter()
-        collector = KiddeCollector(kidde_api, influxdb_writer)
+        collector = KiddeCollector(kidde_api)
         asyncio.run(collector.main_loop())
     except ValueError as e:
         logger.error(str(e))
