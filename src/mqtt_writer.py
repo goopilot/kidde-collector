@@ -1,7 +1,7 @@
 import logging
 import config
 from ha_mqtt_discoverable import Settings, DeviceInfo
-from ha_mqtt_discoverable.sensors import BinarySensor, BinarySensorInfo, NumberInfo, Number
+from ha_mqtt_discoverable.sensors import BinarySensor, BinarySensorInfo, NumberInfo, Number, Text, TextInfo
 
 logger = logging.getLogger("kidde_collector")
 
@@ -49,6 +49,12 @@ class MqttWriter:
                 temp_settings = Settings(mqtt=mqtt_settings, entity=temp_sensor_info)
                 temp_sensor = Number(temp_settings, command_callback=None)
                 temp_sensor.set_value(device['temperature'])
+
+                last_seen_info =  TextInfo(name="Last Seen", unique_id="sensor_last_seen", device=device_info)
+                last_seen_settings = Settings(mqtt=mqtt_settings, entity=last_seen_info)
+                last_seen_sensor = Text(last_seen_settings, command_callback=None)
+                last_seen_sensor.set_text(device['last_seen'])
+
 
                 logger.debug(
                     f"MQTT Message sent for device {device['serial_number']}"
