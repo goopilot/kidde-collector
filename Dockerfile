@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12.6-slim
+FROM python:3.12.11-slim
 
 # Set the working directory in the container to /opt/kidde-collector
 WORKDIR /app/kidde-collector
